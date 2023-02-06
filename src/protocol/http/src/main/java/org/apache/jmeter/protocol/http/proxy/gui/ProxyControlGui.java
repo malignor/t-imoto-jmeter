@@ -61,6 +61,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jmeter.control.Controller;
 import org.apache.jmeter.control.gui.LogicControllerGui;
 import org.apache.jmeter.control.gui.TreeNodeWrapper;
@@ -146,6 +147,11 @@ public class ProxyControlGui extends LogicControllerGui implements JMeterGUIComp
      * Set/clear the Use Keep-Alive box on the samplers (default is true)
      */
     private JCheckBox useKeepAlive;
+
+    /**
+     * Set/clear the Detect GraphQL Request box on the samplers (default is true)
+     */
+    private JCheckBox detectGraphQLRequest;
 
     /*
      * Use regexes to match the source data
@@ -323,6 +329,7 @@ public class ProxyControlGui extends LogicControllerGui implements JMeterGUIComp
             model.setSamplerRedirectAutomatically(samplerRedirectAutomatically.isSelected());
             model.setSamplerFollowRedirects(samplerFollowRedirects.isSelected());
             model.setUseKeepAlive(useKeepAlive.isSelected());
+            model.setDetectGraphQLRequest(detectGraphQLRequest.isSelected());
             model.setSamplerDownloadImages(samplerDownloadImages.isSelected());
             model.setHTTPSampleNamingMode(httpSampleNamingMode.getSelectedIndex());
             model.setDefaultEncoding(defaultEncoding.getText());
@@ -332,7 +339,10 @@ public class ProxyControlGui extends LogicControllerGui implements JMeterGUIComp
             model.setRegexMatch(regexMatch.isSelected());
             model.setContentTypeInclude(contentTypeInclude.getText());
             model.setContentTypeExclude(contentTypeExclude.getText());
-            model.setHttpSampleNameFormat(httpSampleNameFormat.getText());
+            httpSampleNameFormat.setEnabled(httpSampleNamingMode.getSelectedIndex() == 3);
+            if (StringUtils.isNotBlank(httpSampleNameFormat.getText())) {
+                model.setHttpSampleNameFormat(httpSampleNameFormat.getText());
+            }
             TreeNodeWrapper nw = (TreeNodeWrapper) targetNodes.getSelectedItem();
             if (nw == null) {
                 model.setTarget(null);
@@ -388,6 +398,7 @@ public class ProxyControlGui extends LogicControllerGui implements JMeterGUIComp
         samplerRedirectAutomatically.setSelected(model.getSamplerRedirectAutomatically());
         samplerFollowRedirects.setSelected(model.getSamplerFollowRedirects());
         useKeepAlive.setSelected(model.getUseKeepalive());
+        detectGraphQLRequest.setSelected(model.getDetectGraphQLRequest());
         samplerDownloadImages.setSelected(model.getSamplerDownloadImages());
         httpSampleNamingMode.setSelectedIndex(model.getHTTPSampleNamingMode());
         prefixHTTPSampleName.setText(model.getPrefixHTTPSampleName());
@@ -753,6 +764,7 @@ public class ProxyControlGui extends LogicControllerGui implements JMeterGUIComp
         testPlanPanel.add(createTestPlanContentPanel());
         testPlanPanel.add(Box.createVerticalStrut(5));
         testPlanPanel.add(createHTTPSamplerPanel());
+        testPlanPanel.add(createGraphQLHTTPSamplerPanel());
         tabbedPane.add(JMeterUtils
                 .getResString("proxy_test_plan_creation"), testPlanPanel);
 
@@ -989,6 +1001,20 @@ public class ProxyControlGui extends LogicControllerGui implements JMeterGUIComp
 
         panel.add(labelSamplerType);
         panel.add(samplerTypeName, "growx, span");
+
+        return panel;
+    }
+
+    private JPanel createGraphQLHTTPSamplerPanel() {
+        detectGraphQLRequest = new JCheckBox(JMeterUtils.getResString("detect_graphql_request")); // $NON-NLS-1$
+        detectGraphQLRequest.setSelected(true);
+        detectGraphQLRequest.addActionListener(this);
+        detectGraphQLRequest.setActionCommand(ENABLE_RESTART);
+
+        JPanel panel = new JPanel(new MigLayout("fillx, wrap 3"));
+        panel.setBorder(BorderFactory.createTitledBorder(JMeterUtils.getResString("proxy_sampler_graphql_settings"))); // $NON-NLS-1$
+        panel.add(detectGraphQLRequest);
+
         return panel;
     }
 
